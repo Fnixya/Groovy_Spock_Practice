@@ -3,7 +3,7 @@
  */
 package groovy_spock
 
-import spock.lang.Specification
+import spock.lang.*
 
 class AppTest extends Specification {
     def "application has a greeting"() {

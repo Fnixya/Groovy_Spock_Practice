@@ -19,15 +19,25 @@ repositories {
     mavenCentral()
 }
 
+ext {
+    useGroovy3 = project.hasProperty('useGroovy3') ? project.property('useGroovy3').toBoolean() : false
+}
+
 dependencies {
-    // Use the latest Groovy version for building this library
-    implementation 'org.codehaus.groovy:groovy-all:3.0.13'
+    if (useGroovy3) {
+        println "Using Groovy 3"
+        implementation 'org.codehaus.groovy:groovy-all:3.0.13'
+        testImplementation 'org.spockframework:spock-core:2.2-groovy-3.0'
+    } else {
+        println "Using Groovy 4"
+        implementation 'org.apache.groovy:groovy:4.0.0'
+        testImplementation 'org.spockframework:spock-core:2.4-M5-groovy-4.0'
+    }
 
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:32.1.3-jre'
 
     // Use the awesome Spock testing and specification framework even with Java
-    testImplementation 'org.spockframework:spock-core:2.2-groovy-3.0'
     testImplementation 'junit:junit:4.13.2'
 }
 
