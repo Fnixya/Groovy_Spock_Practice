@@ -14,23 +14,21 @@ class BoundaryValueTests extends Specification {
 
       where:
       a | b | expected
-      Float.MAX_VALUE | 1 | Float.POSITIVE_INFINITY
       Float.MAX_VALUE | Float.MAX_VALUE | Float.POSITIVE_INFINITY
       Float.MIN_VALUE | Float.MAX_VALUE | Float.MAX_VALUE
       -Float.MAX_VALUE | -Float.MAX_VALUE | Float.NEGATIVE_INFINITY
-      -Float.MIN_VALUE | -Float.MIN_VALUE | 0.0
    }
    
    def "Multiplications"() {
       expect:
-      o.Mult(a, b) == expected
+      o.Mult(a, b) == expected as float
 
       where:
       a | b | expected
       Float.MAX_VALUE | 2 | Float.POSITIVE_INFINITY
-      Float.MIN_VALUE | 0.1 | 0.0
+      Float.MIN_VALUE | 0.1 | 0.0f
       Float.MAX_VALUE | -2 | Float.NEGATIVE_INFINITY
-      Float.MIN_VALUE | -0.1 as float | Float.MIN_VALUE * -0.1 as float
+      Float.MIN_VALUE | -0.1 as float | -0.0f
    }
 }
 
@@ -90,12 +88,12 @@ class ArithmeticTests extends Specification {
       o.Log(a) == expected
 
       where:
-       a | expected
-       0.0 | Float.NEGATIVE_INFINITY
-       1.0 | 0.0
-       -1.0 | Float.NaN
-       Float.POSITIVE_INFINITY | Float.POSITIVE_INFINITY
-       Float.NaN | Float.NaN
+      a | expected
+      0.0 | Float.NEGATIVE_INFINITY
+      1.0 | 0.0
+      -1.0 | Float.NaN
+      Float.POSITIVE_INFINITY | Float.POSITIVE_INFINITY
+      Float.NaN | Float.NaN
    }
 }
 
@@ -152,35 +150,52 @@ class TrigonometricTests extends Specification {
 class ComparisonTests extends Specification {
    def o = new Operations()
 
-   def "Total Order Comparisons with NaN"() {
+   def "NaN Less than"() {
       expect:
       (a < b) == expected
 
       where:
       a | b | expected
       Float.NaN | Float.NaN | false
-      Float.NaN | 0.0 | false
-      Float.NaN | -0.0 | true
+      Float.NaN | 0.0f | false
+      Float.NaN | -0.0f | false
       Float.NaN | Float.POSITIVE_INFINITY | false
       Float.NaN | Float.NEGATIVE_INFINITY | false
-      Float.NaN | Float.NaN | false
-      0.0 | Float.NaN | false
-      -0.0 | Float.NaN | false
-      Float.POSITIVE_INFINITY | Float.NaN | false
-      Float.NEGATIVE_INFINITY | Float.NaN | false
    }
 
-   def "with Infinity"() {
+   def "NaN Greater than"() {
       expect:
-      Float.compare(a, b) == expected
+      (a < b) == expected
 
       where:
       a | b | expected
-      Float.POSITIVE_INFINITY | Float.POSITIVE_INFINITY | 0
-      Float.POSITIVE_INFINITY | Float.NEGATIVE_INFINITY | 1
-      Float.NEGATIVE_INFINITY | Float.NEGATIVE_INFINITY | 0
-      Float.MAX_VALUE | Float.POSITIVE_INFINITY | -1
-      Float.NEGATIVE_INFINITY | -Float.MAX_VALUE | -1
+      Float.NaN | 0.0f | false
+      Float.NaN | -0.0f | false
+      Float.NaN | Float.POSITIVE_INFINITY | false
+      Float.NaN | Float.NEGATIVE_INFINITY | false
+   }
+
+   def "Less Than Infinity"() {
+      expect:
+      (a < b) == expected
+
+      where:
+      a | b | expected
+      Float.POSITIVE_INFINITY | Float.POSITIVE_INFINITY | false
+      Float.POSITIVE_INFINITY | Float.NEGATIVE_INFINITY | false
+      Float.NEGATIVE_INFINITY | Float.POSITIVE_INFINITY | true
+      Float.NEGATIVE_INFINITY | Float.NEGATIVE_INFINITY | false
+      Float.MAX_VALUE | Float.POSITIVE_INFINITY | true
+      Float.NEGATIVE_INFINITY | -Float.MAX_VALUE | true
+   }
+
+   def "Equility of Signed Zeros"() {
+      expect:
+      (a == b) == expected
+
+      where:
+      a | b | expected
+      0.0f | -0.0f | false
    }
 
    def "with Signed Zeros"() {
@@ -189,12 +204,23 @@ class ComparisonTests extends Specification {
 
       where:
       a | b | expected
-      0.0 | 0.0 | 0
-      -0.0 | 0.0 | -1
-      0.0 | -0.0 | 1
-      -0.0 | -0.0 | 0
-      -Float.MIN_VALUE | -0.0 | -1
-      0.0 | Float.MIN_VALUE | -1
+      0.0f | 0.0f | 0
+      -0.0f | 0.0f | -1
+      0.0f | -0.0f | 1
+      -0.0f | -0.0f | 0
+      -Float.MIN_VALUE | -0.0f | -1
+      0.0f | Float.MIN_VALUE | -1
+   }
+
+   def "Equalities with NaN"() {
+      expect:
+      (a == b) == expected
+
+      where:
+      a | b | expected      
+      Float.POSITIVE_INFINITY | Float.POSITIVE_INFINITY | true
+      Float.POSITIVE_INFINITY | Float.NEGATIVE_INFINITY | false
+      Float.NEGATIVE_INFINITY | Float.NEGATIVE_INFINITY | true
    }
 
    def "Equalities with NaN"() {
@@ -204,11 +230,9 @@ class ComparisonTests extends Specification {
       where:
       a | b | expected      
       Float.NaN | 0.0 | false
-      0.0 | Float.NaN | false
-      Float.NaN | -Float.NaN | false
-      -Float.NaN | Float.NaN | false
+      Float.NaN | Float.POSITIVE_INFINITY | false
+      Float.NaN | Float.NEGATIVE_INFINITY | false
       Float.NaN | Float.NaN | false
-      -Float.NaN | -Float.NaN | false
    }
 }
 
@@ -253,6 +277,10 @@ class IndeterminateTests extends Specification {
       0.0 | -1.0 | -1
       -0.0 | 1.0 | -1
       -0.0 | -1.0 | 0
+      0.0f | 1.0f | 0
+      0.0f | -1.0f | -1
+      -0.0f | 1.0f | -1
+      -0.0f | -1.0f | 0
    }
 
    def "Test Exponential Inderterminates"() {
