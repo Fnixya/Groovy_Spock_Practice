@@ -4,61 +4,208 @@ import spock.lang.*
 
 // Test indeterminate involving 0,1,+INF: https://mathworld.wolfram.com/Indeterminate.html
 
-class FloatCalculusTests extends Specification {
+// 21 tests, 4 failed
+class BoundaryValueTests extends Specification {
    def o = new Operations()
-  
-   def "Test 0/0"() {
+   
+   def "Additions"() {
+      expect:
+      o.Sum(a, b) == expected
+
+      where:
+      a | b | expected
+      Float.MAX_VALUE | 1 | Float.POSITIVE_INFINITY
+      Float.MAX_VALUE | Float.MAX_VALUE | Float.POSITIVE_INFINITY
+      Float.MIN_VALUE | Float.MAX_VALUE | Float.MAX_VALUE
+      -Float.MAX_VALUE | -Float.MAX_VALUE | Float.NEGATIVE_INFINITY
+      -Float.MIN_VALUE | -Float.MIN_VALUE | 0.0
+   }
+
+   def "Exponents"() {
+      expect:
+      o.Exp(a, b) == expected
+
+      where:
+      a | b | expected
+      2.71 | Float.POSITIVE_INFINITY | Float.POSITIVE_INFINITY
+      2.71 | Float.NEGATIVE_INFINITY | 0.0
+      2.71 | Float.NaN | Float.NaN                                
+      2.71 | 710 | Float.POSITIVE_INFINITY
+      2.71 | -745 | 0.0
+      Float.NaN | 0 | 1
+   }
+
+   def "Logarithms"() {
+      expect:
+      o.Log(a) == expected
+
+      where:
+       a | expected
+       1.0 | 0.0
+       0.0 | Float.NEGATIVE_INFINITY
+       -1.0 | Float.NaN
+       Float.POSITIVE_INFINITY | Float.POSITIVE_INFINITY
+       Float.NaN | Float.NaN
+   }
+
+   def "Multiplications"() {
+      expect:
+      o.Mult(a, b) == expected
+
+      where:
+      a | b | expected
+      Float.MAX_VALUE | 2 | Float.POSITIVE_INFINITY
+      Float.MIN_VALUE | 0.5 | 0.0
+      Float.MAX_VALUE | -2 | Float.NEGATIVE_INFINITY
+      Float.MIN_VALUE | -0.5 | -0.0
+   }
+}
+
+// 12 tests
+class TrigonometricTests extends Specification {
+   def o = new Operations()
+
+   def "With Sine"() {
+      expect:
+      o.Sin(a) == expected
+
+      where:
+      a | expected
+      Float.NaN | Float.NaN
+      Float.POSITIVE_INFINITY | Float.NaN
+      Float.NEGATIVE_INFINITY | Float.NaN
+   }
+
+   def "With Cosine"() {
+      expect:
+      o.Cos(a) == expected
+
+      where:
+      a | expected
+      Float.NaN | Float.NaN
+      Float.POSITIVE_INFINITY | Float.NaN
+      Float.NEGATIVE_INFINITY | Float.NaN
+   }
+
+   def "With Tangent"() {
+      expect:
+      o.Tan(a) == expected
+
+      where:
+      a | expected
+      Float.NaN | Float.NaN
+      Float.POSITIVE_INFINITY | Float.NaN
+      Float.NEGATIVE_INFINITY | Float.NaN
+   }
+
+   def "With ArcTan"() {
+      expect:
+      o.ArcTan(a) == expected
+
+      where:
+      a | expected
+      Float.NaN | Float.NaN
+      Float.POSITIVE_INFINITY | Math.PI/2 as float
+      Float.NEGATIVE_INFINITY | -Math.PI/2 as float
+   }
+}
+
+// 27 tests, 11 failure
+class ComparisonTests extends Specification {
+   def o = new Operations()
+
+   def "Total Order Comparisons with NaN"() {
+      expect:
+      (a < b) == expected
+
+      where:
+      a | b | expected
+      Float.NaN | Float.NaN | false
+      Float.NaN | 0.0 | false
+      Float.NaN | -0.0 | true
+      Float.NaN | Float.POSITIVE_INFINITY | false
+      Float.NaN | Float.NEGATIVE_INFINITY | false
+      Float.NaN | Float.NaN | false
+      0.0 | Float.NaN | false
+      -0.0 | Float.NaN | false
+      Float.POSITIVE_INFINITY | Float.NaN | false
+      Float.NEGATIVE_INFINITY | Float.NaN | false
+   }
+
+   def "with Infinity"() {
+      expect:
+      Float.compare(a, b) == expected
+
+      where:
+      a | b | expected
+      Float.POSITIVE_INFINITY | Float.POSITIVE_INFINITY | 0
+      Float.POSITIVE_INFINITY | Float.NEGATIVE_INFINITY | 1
+      Float.NEGATIVE_INFINITY | Float.NEGATIVE_INFINITY | 0
+      Float.MAX_VALUE | Float.POSITIVE_INFINITY | -1
+      Float.NEGATIVE_INFINITY | -Float.MAX_VALUE | -1
+   }
+
+   def "with Signed Zeros"() {
+      expect:
+      Float.compare(a, b) == expected
+
+      where:
+      a | b | expected
+      0.0 | 0.0 | 0
+      -0.0 | 0.0 | -1
+      0.0 | -0.0 | 1
+      -0.0 | -0.0 | 0
+      -Float.MIN_VALUE | -0.0 | -1
+      0.0 | Float.MIN_VALUE | -1
+   }
+
+   def "Equalities with NaN"() {
+      expect:
+      (a == b) == expected
+
+      where:
+      a | b | expected      
+      Float.NaN | 0.0 | false
+      0.0 | Float.NaN | false
+      Float.NaN | -Float.NaN | false
+      -Float.NaN | Float.NaN | false
+      Float.NaN | Float.NaN | false
+      -Float.NaN | -Float.NaN | false
+   }
+}
+
+// 15 tests
+class IndeterminateTests extends Specification {
+   def o = new Operations()
+
+   def "0/0"() {
       expect:
       Float.NaN==o.Div(0.0,0.0)
    }
 
-   def "Test 0*INF"() {
+   def "0*INF"() {
       expect:
-      Float.NaN==o.Mult(0.0,Float.POSITIVE_INFINITY)
+      o.Mult(a, b) == expected
+
+      where:
+      a | b | expected
+      0.0 | Float.POSITIVE_INFINITY | Float.NaN
+      0.0 | Float.NEGATIVE_INFINITY | Float.NaN
    }    
 
-   def "Test INF/INF"() {
+   def "INF/INF Divisions"() {
       expect:
-      Float.NaN==o.Div(Float.POSITIVE_INFINITY,Float.POSITIVE_INFINITY)
-   }
+      o.Div(a, b) == expected
 
-   def "Test INF-INF"() {
-      expect:
-      Float.NaN==o.Sum(Float.POSITIVE_INFINITY,Float.NEGATIVE_INFINITY)
-   }
+      where:
+      a | b | expected
+      Float.POSITIVE_INFINITY | Float.POSITIVE_INFINITY | Float.NaN
+      Float.NEGATIVE_INFINITY | Float.POSITIVE_INFINITY | Float.NaN
+      Float.POSITIVE_INFINITY | Float.NEGATIVE_INFINITY | Float.NaN
+      Float.NEGATIVE_INFINITY | Float.NEGATIVE_INFINITY | Float.NaN
+   }  
 
-   def "Test 0^0"() {
-      expect:
-      1==o.Exp(0.0,0.0)
-   }
-
-   def "Test INF^0"() {
-      expect:
-      1==o.Exp(Float.POSITIVE_INFINITY,0.0)
-   }
-
-   def "Test 1.0^INF"() {
-      expect:
-      Float.NaN==o.Exp(1.0, Float.POSITIVE_INFINITY)
-   }
-
-   def "Test +INF"() {
-      expect:
-      Float.POSITIVE_INFINITY==o.Div(1.0,0.0)
-   }
-  
-   def "Test -INF"() {
-      expect:
-      Float.NEGATIVE_INFINITY==o.Div(-1.0,0.0)
-   }
-
-   def "Test -0,0 - False Negative"() {
-      expect:
-      // new Float (-0.0) == o.Div(0.0,-1.0)
-      o.Div(0.0,-1.0) == -0.0
-   }
-
-   def "Test 0,0"() {
+   def "0/b Divisions"() {
       expect:
       Float.compare(o.Div(a, b), 0.0) == expected
 
@@ -70,29 +217,97 @@ class FloatCalculusTests extends Specification {
       -0.0 | -1.0 | 0
    }
 
-   def "Test sqrt -1"() {
+   def "Test Exponential Inderterminates"() {
       expect:
-      Float.NaN==o.SR(-1.0)
+      o.Exp(a, b) == expected
+
+      where:
+      a | b | expected
+      1 | Float.POSITIVE_INFINITY | Float.NaN   
+      1 | Float.NEGATIVE_INFINITY | Float.NaN
+      0 | 0 | 1                                
+      Float.POSITIVE_INFINITY | 0 | 1          
+   } 
+}
+
+// 7 tests
+class SquareRootTests extends Specification {
+   def o = new Operations()
+
+   def "Of Positive Numbers"() {
+      expect:
+      o.SquareRoot(a) == expected
+
+      where:
+      a | expected
+      0.0| 0.0
+      1.0 | 1.0
+      Float.POSITIVE_INFINITY | Float.POSITIVE_INFINITY
+      Float.NaN | Float.NaN
    }
 
-   def "INF/-INF"() {
+   def "Of Negative Numbers"() {
+      expect:
+      o.SquareRoot(a) == expected
+
+      where:
+      a | expected
+      -0.0 | -0.0          // False Positive
+      -1.0 | Float.NaN
+      -Float.POSITIVE_INFINITY | Float.NaN
+   }
+}
+
+class FloatCalculusTests extends Specification {
+   def o = new Operations()
+  
+   def "Test Sum of Infinities"() {
+      expect:
+      o.Sum(a, b) == expected
+      
+      where:
+      a | b | expected
+      Float.POSITIVE_INFINITY | Float.POSITIVE_INFINITY | Float.POSITIVE_INFINITY
+      Float.NaN | Float.POSITIVE_INFINITY | Float.NEGATIVE_INFINITY
+      Float.NaN | Float.NEGATIVE_INFINITY | Float.POSITIVE_INFINITY
+      Float.NEGATIVE_INFINITY | Float.NEGATIVE_INFINITY | Float.NEGATIVE_INFINITY
+   }
+
+   def "Test Sum of NaNs"() {
+      expect:
+      o.Sum(a, b) == expected
+      
+      where:
+      a | b | expected
+      Float.POSITIVE_INFINITY | Float.POSITIVE_INFINITY | Float.POSITIVE_INFINITY
+      Float.NaN | Float.POSITIVE_INFINITY | Float.NEGATIVE_INFINITY
+      Float.NaN | Float.NEGATIVE_INFINITY | Float.POSITIVE_INFINITY
+      Float.NEGATIVE_INFINITY | Float.NEGATIVE_INFINITY | Float.NEGATIVE_INFINITY
+   }
+
+
+   def "Test Division with zero"() {
       expect:
       o.Div(a, b) == expected
 
       where:
       a | b | expected
-      Float.POSITIVE_INFINITY | Float.POSITIVE_INFINITY | Float.NaN
-      Float.NEGATIVE_INFINITY | Float.POSITIVE_INFINITY | Float.NaN
-      Float.POSITIVE_INFINITY | Float.NEGATIVE_INFINITY | Float.NaN
-      Float.NEGATIVE_INFINITY | Float.NEGATIVE_INFINITY | Float.NaN
+      1.0 | 0.0 | Float.POSITIVE_INFINITY
+      1.0 | -0.0 | Float.NEGATIVE_INFINITY
+      -1.0 | 0.0 | Float.NEGATIVE_INFINITY
+      -1.0 | -0.0 | Float.POSITIVE_INFINITY
    }
 
-   def "Test sqrt -1"() {
+   def "Test -0,0 - False Negative"() {
       expect:
-      Float.NaN==o.SR(-1.0)
+      // new Float (-0.0) == o.Div(0.0,-1.0)
+      o.Div(0.0,-1.0) == -0.0
    }
+
+
 
 }
+
 
 // SUT: Operations
 
@@ -118,9 +333,28 @@ class Operations {
       return res
    }
 
-   float SR (float a=0.0) {
+   float Log (float a=0.0, float b=Math.exp(1)) {
+      return Math.log(a)/Math.log(b)
+   }
+
+   float SquareRoot (float a=0.0) {
       float res=Math.sqrt(a)
       return res
    }
 
+   float Sin (float a=0.0) {
+      return Math.sin(a)
+   }
+
+   float Cos (float a=0.0) {
+      return Math.cos(a)
+   }
+
+   float Tan (float a=0.0) {
+      return Math.tan(a)
+   }
+
+   float ArcTan (float a=0.0) {
+      return Math.atan(a)
+   }
 }
