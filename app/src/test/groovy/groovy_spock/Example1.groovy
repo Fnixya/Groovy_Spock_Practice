@@ -68,6 +68,22 @@ class ArithmeticTests extends Specification {
       Float.NEGATIVE_INFINITY | Float.NEGATIVE_INFINITY | Float.POSITIVE_INFINITY
    }
 
+   def "0/b Divisions"() {
+      expect:
+      Float.compare(o.Div(a, b), 0.0) == expected
+
+      where:
+      a | b | expected
+      0.0 | 1.0 | 0
+      0.0 | -1.0 | -1
+      -0.0 | 1.0 | -1
+      -0.0 | -1.0 | 0
+      0.0f | 1.0f | 0
+      0.0f | -1.0f | -1
+      -0.0f | 1.0f | -1
+      -0.0f | -1.0f | 0
+   }
+
    def "Exponents"() {
       expect:
       o.Exp(a, b) == expected
@@ -242,18 +258,8 @@ class IndeterminateTests extends Specification {
 
    def "0/0"() {
       expect:
-      Float.NaN==o.Div(0.0,0.0)
+      o.Div(0.0,0.0) == Float.NaN 
    }
-
-   def "0*INF"() {
-      expect:
-      o.Mult(a, b) == expected
-
-      where:
-      a | b | expected
-      0.0 | Float.POSITIVE_INFINITY | Float.NaN
-      0.0 | Float.NEGATIVE_INFINITY | Float.NaN
-   }    
 
    def "INF/INF Divisions"() {
       expect:
@@ -267,20 +273,23 @@ class IndeterminateTests extends Specification {
       Float.NEGATIVE_INFINITY | Float.NEGATIVE_INFINITY | Float.NaN
    }  
 
-   def "0/b Divisions"() {
+   def "0*INF"() {
       expect:
-      Float.compare(o.Div(a, b), 0.0) == expected
+      o.Mult(a, b) == expected
 
       where:
       a | b | expected
-      0.0 | 1.0 | 0
-      0.0 | -1.0 | -1
-      -0.0 | 1.0 | -1
-      -0.0 | -1.0 | 0
-      0.0f | 1.0f | 0
-      0.0f | -1.0f | -1
-      -0.0f | 1.0f | -1
-      -0.0f | -1.0f | 0
+      0.0 | Float.POSITIVE_INFINITY | Float.NaN
+      0.0 | Float.NEGATIVE_INFINITY | Float.NaN
+   }    
+
+   def "INF-INF"() {
+      expect:
+      o.Sum(a, b) == expected
+
+      where:
+      a | b | expected
+      Float.POSITIVE_INFINITY | Float.NEGATIVE_INFINITY | Float.NaN
    }
 
    def "Test Exponential Inderterminates"() {
